@@ -111,6 +111,119 @@
 //   );
 // };
 
+// import React, { useState, useEffect } from "react";
+// import "../styles/global.css";
+// import medIcon from "../images/med.png";
+
+// const Dashboard: React.FC = () => {
+//   const [patients, setPatients] = useState<{ name: string; contact: string; date: string; time: string }[]>([]);
+//   const [name, setName] = useState("");
+//   const [contact, setContact] = useState("");
+//   const [date, setDate] = useState("");
+//   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+//   const [selectedSlot, setSelectedSlot] = useState("");
+
+//   const today = new Date().toLocaleDateString("en-GB", {
+//   day: "numeric",
+//   month: "short",
+//   year: "numeric",
+// });
+
+
+//   useEffect(() => {
+//     if (date) {
+//       setAvailableSlots(["09:00", "09:15", "09:30", "09:45", "10:00"]);
+//       setSelectedSlot("");
+//     } else {
+//       setAvailableSlots([]);
+//       setSelectedSlot("");
+//     }
+//   }, [date]);
+
+//   const addPatient = () => {
+//     if (name.trim() && contact.trim() && date && selectedSlot) {
+//       setPatients([...patients, { name, contact, date, time: selectedSlot }]);
+//       setName("");
+//       setContact("");
+//       setDate("");
+//       setAvailableSlots([]);
+//       setSelectedSlot("");
+//     }
+//   };
+
+//   return (
+//     <>
+//       {/* Background Layer */}
+//       <div className="background-layer"></div>
+
+//       {/* Med Icon Layer */}
+//       <div className="med-layer">
+//         <img src={medIcon} alt="med-icon" className="med-floating" />
+//       </div>
+
+//       {/* Main Content */}
+//       <div className="dashboard-container">
+//         <div className="dashboard-card">
+//           <h2>Pending Patients </h2>
+//           <h2>({ today})</h2>
+//           {patients.length === 0 ? (
+//             <p>No patients added yet</p>
+//           ) : (
+//             <ul className="patient-list">
+//               {patients.map((p, i) => (
+//                 <li key={i}>
+//                   <strong>{p.name}</strong> || {p.contact} || {p.date} || {p.time}
+//                 </li>
+//               ))}
+//             </ul>
+//           )}
+//         </div>
+
+//         <div className="dashboard-card">
+//           <h1>Patient Registration</h1>
+//           <form onSubmit={(e) => { e.preventDefault(); addPatient(); }}>
+//             <input
+//               type="text"
+//               placeholder="Patient Name"
+//               value={name}
+//               onChange={(e) => setName(e.target.value)}
+//             />
+//             <input
+//               type="text"
+//               placeholder="Contact Number"
+//               value={contact}
+//               onChange={(e) => setContact(e.target.value)}
+//             />
+//             <h2>Select Date</h2>
+//             <input
+//               type="date"
+//               value={date}
+//               onChange={(e) => setDate(e.target.value)}
+//             />
+//             {availableSlots.length > 0 && (
+//               <>
+//                 <h2>Select Time Slot</h2>
+//                 <select
+//                   value={selectedSlot}
+//                   onChange={(e) => setSelectedSlot(e.target.value)}
+//                 >
+//                   <option value="">-- Select Slot --</option>
+//                   {availableSlots.map((slot, idx) => (
+//                     <option key={idx} value={slot}>{slot}</option>
+//                   ))}
+//                 </select>
+//               </>
+//             )}
+//             <button type="submit" disabled={!name || !contact || !date || !selectedSlot}>
+//               Add & Book
+//             </button>
+//           </form>
+//         </div>
+//       </div>
+//     </>
+//   );
+// };
+
 // export default Dashboard;
 import React, { useState, useEffect } from "react";
 import "../styles/global.css";
@@ -160,34 +273,65 @@ const Dashboard: React.FC = () => {
 
   // 🔹 Available Slots: Fetched from backend, filters expired slots for today
   useEffect(() => {
-    if (!date) {
-      setAvailableSlots([]);
+  if (!date) {
+    setAvailableSlots([]);
+    setSelectedSlot("");
+    return;
+  }
+
+  const fetchSlots = async () => {
+    try {
+      const [allSlotsRes, bookedRes] = await Promise.all([
+        fetch(`http://localhost:8182/api/patient/available-slots?date=${date}`),
+        fetch(`http://localhost:8182/api/admin/patients?date=${date}`)
+      ]);
+
+      const allSlotsRaw: string[] = await allSlotsRes.json(); // ["09:00:00", "11:15:00", ...]
+      const bookedPatients: PatientReservationDTO[] = await bookedRes.json();
+
+      // 🔧 Get current IST time
+      const now = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000; // IST offset in ms
+      const istNow = new Date(now.getTime() + istOffset);
+
+      const selectedDate = new Date(date);
+      const isToday = istNow.toDateString() === selectedDate.toDateString();
+
+      const bookedTimes = bookedPatients.map(p => p.reservationTime.slice(0, 5)); // "HH:mm"
+
+      console.log("🕒 IST Time:", istNow.toISOString());
+      console.log("📅 Selected Date:", selectedDate.toISOString());
+      console.log("📦 Raw Slots:", allSlotsRaw);
+      console.log("⛔ Booked Times:", bookedTimes);
+
+      const filtered = allSlotsRaw
+        .filter(raw => {
+          const [hour, minute, second] = raw.split(":").map(Number);
+          const slotTime = new Date(date);
+          slotTime.setHours(hour, minute, second || 0, 0);
+
+          const istSlotTime = new Date(slotTime.getTime() + istOffset);
+
+          const isBooked = bookedTimes.includes(raw.slice(0, 5));
+          const isFuture = !isToday || istSlotTime.getTime() > istNow.getTime();
+
+          return !isBooked && isFuture;
+        })
+        .map(raw => raw.slice(0, 5)); // display as HH:mm
+
+      console.log("✅ Filtered IST Slots:", filtered);
+
+      setAvailableSlots(filtered);
       setSelectedSlot("");
-      return;
+    } catch (err) {
+      console.error("❌ Error fetching slots:", err);
+      setAvailableSlots([]);
     }
+  };
 
-    fetch(`http://localhost:8182/api/patient/available-slots?date=${date}`)
-      .then((res) => res.json())
-      .then((data: string[]) => {
-        const now = new Date();
-        const selectedDate = new Date(date);
-        const isToday = now.toDateString() === selectedDate.toDateString();
+  fetchSlots();
+}, [date]);
 
-        const filtered = data
-          .map((t) => t.slice(0, 5)) // HH:mm:ss → HH:mm
-          .filter((slot) => {
-            if (!isToday) return true;
-            const [hour, minute] = slot.split(":").map(Number);
-            const slotTime = new Date(date);
-            slotTime.setHours(hour, minute, 0, 0);
-            return slotTime.getTime() > now.getTime();
-          });
-
-        setAvailableSlots(filtered);
-        setSelectedSlot("");
-      })
-      .catch(() => setAvailableSlots([]));
-  }, [date]);
 
   // 🔹 Register patient
   const addPatient = () => {
