@@ -1,0 +1,390 @@
+/* =========================
+   RESET + BASE STYLES
+   ========================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html, #root {
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* =========================
+   Background Layer
+   ========================= */
+.background-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/background.jpg') no-repeat center center fixed;
+  background-size: cover;
+  z-index: 0;
+}
+
+/* =========================
+   Med Icon Layer
+   ========================= */
+.med-layer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.med-floating {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200px;
+  height: auto;
+  animation: floatUpDown 2.5s ease-in-out infinite;
+}
+
+@keyframes floatUpDown {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-20px); }
+  100% { transform: translateY(0); }
+}
+
+/* =========================
+   DASHBOARD STYLES
+   ========================= */
+.dashboard-container {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  padding: 20px;
+}
+
+.dashboard-card {
+  position: relative;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 25px;
+  margin: 20px auto;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  text-align: center;
+}
+
+button {
+  width: fit-content;
+  padding: 14px;
+  margin-top: 12px;
+  background: #73c6db;
+  border: none;
+  color: #fff;
+  font-size: 17px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover {
+  background: #73c6db;
+}
+
+/* =========================
+   NAVBAR STYLES
+   ========================= */
+.navbar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8%;
+  background: #7ddfec;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.navbar-container.sticky {
+  background: #424444;
+}
+
+/* Logo + Text */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.logo img {
+  width: 70px;
+  height: 70px;
+  display: block;
+}
+
+.logo-text {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Right side wrapper */
+.nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 40px;
+  flex-grow: 1;
+}
+
+/* Nav links (desktop only) */
+.navbar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: none;
+}
+
+.navbar-item {
+  margin: 0;
+}
+
+.navbar-link {
+  text-decoration: none;
+  color: #333;
+  font-size: 16px;
+  transition: color 0.3s ease;
+}
+
+.navbar-link:hover {
+  color: #73c6db;
+}
+
+/* Hamburger button (mobile only) */
+.nav-open-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1002;
+  margin-left: auto;
+}
+
+/* =========================
+   Animated Hamburger Icon
+   ========================= */
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 22px;
+}
+
+.hamburger span {
+  display: block;
+  height: 4px;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 2px;
+  animation: pulseLine 1.8s ease-in-out infinite;
+}
+
+.hamburger span:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.hamburger span:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+@keyframes pulseLine {
+  0%   { transform: scaleX(1); }
+  25%  { transform: scaleX(0.4); }
+  50%  { transform: scaleX(1); }
+  75%  { transform: scaleX(0.4); }
+  100% { transform: scaleX(1); }
+}
+
+/* =========================
+   Mobile Sidebar
+   ========================= */
+.mobile-nav {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 260px;
+  height: 100%;
+  background: rgb(139, 156, 156);
+  padding: 20px;
+  box-shadow: -2px 0 8px rgba(5, 5, 5, 0.15);
+  transition: right 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1001;
+}
+.sidebar-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('../images/sidebar.png');
+  background-repeat: repeat;
+  background-size: contain;
+  z-index: 0;
+  animation: sidebarScroll 30s linear infinite;
+  opacity: 0.2;
+  pointer-events: none;
+}
+@keyframes sidebarScroll {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 -1000px; }
+}
+
+.mobile-nav.active {
+  right: 0;
+}
+
+/* Close button inside sidebar */
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* Sidebar nav links */
+.mobile-nav .navbar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+  margin-top: 80px;
+  width: 100%;
+}
+
+/* Sidebar nav item boxes */
+.nav-item-box {
+  background-color: #fff;
+  padding: 12px 20px;
+  margin: 10px 0;
+  border-radius: 8px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.nav-item-box .navbar-link {
+  color: #333;
+  font-size: 16px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nav-item-box .navbar-link:hover {
+  color: #007bff;
+}
+
+/* Overlay for mobile menu */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: none;
+}
+
+.overlay.active {
+  display: block;
+}
+
+/* =========================
+   DESKTOP NAV
+   ========================= */
+@media (min-width: 992px) {
+  .nav-open-btn,
+  .close-btn,
+  .overlay,
+  .mobile-nav {
+    display: none;
+  }
+
+  .navbar-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 30px;
+  }
+
+  .navbar-link {
+    color: white;
+    text-align: center;
+  }
+
+  .navbar-link:hover {
+    color: #ffdd57;
+  }
+}
+
+/* =========================
+   PRELOADER
+   ========================= */
+.preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: #1f1d1d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.preloader-gif {
+  width: 120px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.preloader-text {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+
+.navbar-link.active-link {
+  border-bottom: 2px solid #ffdd57;
+  padding-bottom: 4px;
+}
