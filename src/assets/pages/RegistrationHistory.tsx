@@ -74,7 +74,7 @@ const RegistrationHistory: React.FC = () => {
       return;
     }
 
-    fetch(`http://localhost:8182/api/patient/history?patientId=${patientId}`)
+    fetch(`https://hospital-reservation-backend-1.onrender.com/api/patient/history?patientId=${patientId}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch history");
         return res.json();
