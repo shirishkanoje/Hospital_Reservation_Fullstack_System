@@ -252,7 +252,7 @@ const Dashboard: React.FC = () => {
 
   // 🔹 Pending Patients: Shows only today's patients, hides contact, filters expired slots
   const fetchPendingPatients = () => {
-    fetch(`http://localhost:8182/api/admin/patients?date=${todayDate}`)
+    fetch(`https://hospital-reservation-backend-1.onrender.com/api/admin/patients?date=${todayDate}`)
       .then((res) => res.json())
       .then((data: PatientReservationDTO[]) => {
         const now = new Date();
@@ -282,8 +282,8 @@ const Dashboard: React.FC = () => {
   const fetchSlots = async () => {
     try {
       const [allSlotsRes, bookedRes] = await Promise.all([
-        fetch(`http://localhost:8182/api/patient/available-slots?date=${date}`),
-        fetch(`http://localhost:8182/api/admin/patients?date=${date}`)
+        fetch(`https://hospital-reservation-backend-1.onrender.com/api/patient/available-slots?date=${date}`),
+        fetch(`https://hospital-reservation-backend-1.onrender.com/api/admin/patients?date=${date}`)
       ]);
 
       const allSlotsRaw: string[] = await allSlotsRes.json(); // ["09:00:00", "11:15:00", ...]
@@ -338,7 +338,7 @@ const Dashboard: React.FC = () => {
     if (name.trim() && contact.trim() && date && selectedSlot) {
       const payload = { name, contact, date, time: selectedSlot };
 
-      fetch("http://localhost:8182/api/patient/book-with-payment", {
+      fetch("https://hospital-reservation-backend-1.onrender.com/api/patient/book-with-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
