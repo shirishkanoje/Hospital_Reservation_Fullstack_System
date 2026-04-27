@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Base URL of your backend
-const BASE_URL = "http://localhost:8182/api/patient";
+// ✅ PRODUCTION BACKEND URL
+const BASE_URL = "https://hospital-reservation-backend-1.onrender.com/api/patient";
 
 export const addPatient = async (patient: { name: string; contactNumber: string }) => {
   try {
