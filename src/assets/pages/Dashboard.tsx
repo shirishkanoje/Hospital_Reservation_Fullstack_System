@@ -6,7 +6,11 @@ import medIcon from "../images/med.png";
 const BASE_URL = "https://hospital-reservation-backend-1.onrender.com";
 
 interface PatientReservationDTO {
-  name: string;
+  name?: string;
+  patientName?: string;
+  patient?: {
+    name: string;
+  };
   reservationDate: string;
   reservationTime: string;
 }
@@ -19,8 +23,8 @@ const Dashboard: React.FC = () => {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
 
-  // ✅ FIXED (IST safe)
-  const todayDate = new Date().toISOString().split("T")[0];
+  // ✅ SAFE DATE (IST SAFE)
+  const todayDate = new Date().toLocaleDateString("en-CA");
 
   const todayDisplay = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
@@ -37,9 +41,13 @@ const Dashboard: React.FC = () => {
         `${BASE_URL}/api/admin/patients?date=${todayDate}`
       );
 
-      const data: PatientReservationDTO[] = await res.json();
+      const data = await res.json();
+
+      console.log("API DATA:", data); // 🔥 DEBUG
+
       setPatients(data);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setPatients([]);
     }
   };
@@ -51,7 +59,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // =========================
-  // 🔹 FETCH SLOTS (FIXED)
+  // 🔹 FETCH SLOTS
   // =========================
   useEffect(() => {
     if (!date) {
@@ -71,9 +79,7 @@ const Dashboard: React.FC = () => {
         const booked: PatientReservationDTO[] = await bookedRes.json();
 
         const now = new Date();
-
-        // ✅ IMPORTANT FIX
-        const todayStr = new Date().toISOString().split("T")[0];
+        const todayStr = new Date().toLocaleDateString("en-CA");
         const isToday = date === todayStr;
 
         const bookedTimes = booked.map((p) =>
@@ -88,13 +94,11 @@ const Dashboard: React.FC = () => {
 
             const isBooked = bookedTimes.includes(slot.slice(0, 5));
 
-            // ✅ FIXED LOGIC
             if (isToday) {
               return !isBooked && slotTime > now;
-            } else {
-              // FUTURE DATE → no time filtering
-              return !isBooked;
             }
+
+            return !isBooked;
           })
           .map((slot) => slot.slice(0, 5));
 
@@ -146,6 +150,18 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // =========================
+  // 🔥 SAFE NAME HANDLER
+  // =========================
+  const getPatientName = (p: PatientReservationDTO) => {
+    return (
+      p.name ||
+      p.patientName ||
+      p.patient?.name ||
+      "Unknown"
+    );
+  };
+
   return (
     <>
       <div className="background-layer"></div>
@@ -167,7 +183,11 @@ const Dashboard: React.FC = () => {
             <ul className="patient-list">
               {patients.map((p, i) => (
                 <li key={i}>
-                  <strong>{p.name}</strong> | {p.reservationDate} | {p.reservationTime}
+                  <strong>{getPatientName(p)}</strong>
+                  {" | "}
+                  {p.reservationDate}
+                  {" | "}
+                  {p.reservationTime}
                 </li>
               ))}
             </ul>
