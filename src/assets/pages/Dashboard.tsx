@@ -16,8 +16,8 @@ const Dashboard: React.FC = () => {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
 
-  // ✅ IST SAFE DATE (FIXED)
-  const todayDate = new Date().toLocaleDateString("en-CA");
+  // ✅ SAFE DATE (NO TIMEZONE BUG)
+  const todayDate = new Date().toISOString().split("T")[0];
 
   const todayDisplay = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
@@ -26,14 +26,17 @@ const Dashboard: React.FC = () => {
   });
 
   // =========================
-  // 🔹 FETCH PENDING PATIENTS
+  // 🔹 FETCH TODAY'S PATIENTS
   // =========================
   const fetchPendingPatients = () => {
     fetch(`https://hospital-reservation-backend-1.onrender.com/api/admin/patients?date=${todayDate}`)
       .then((res) => res.json())
       .then((data: PatientReservationDTO[]) => {
-        // ✅ SHOW ALL TODAY'S PATIENTS (no wrong filtering)
-        setPatients(data);
+        // ✅ EXTRA SAFETY FILTER
+        const todayOnly = data.filter(
+          (p) => p.reservationDate === todayDate
+        );
+        setPatients(todayOnly);
       })
       .catch(() => setPatients([]));
   };
@@ -41,7 +44,6 @@ const Dashboard: React.FC = () => {
   // ✅ AUTO REFRESH EVERY 10s
   useEffect(() => {
     fetchPendingPatients();
-
     const interval = setInterval(fetchPendingPatients, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -68,22 +70,30 @@ const Dashboard: React.FC = () => {
 
         const now = new Date();
         const selectedDate = new Date(date);
-        const isToday = now.toDateString() === selectedDate.toDateString();
 
-        const bookedTimes = bookedPatients.map(p => p.reservationTime.slice(0, 5));
+        const isToday =
+          now.toISOString().split("T")[0] === date;
+
+        const bookedTimes = bookedPatients.map((p) =>
+          p.reservationTime.slice(0, 5)
+        );
 
         const filtered = allSlotsRaw
-          .filter(raw => {
+          .filter((raw) => {
             const [hour, minute] = raw.split(":").map(Number);
             const slotTime = new Date(date);
             slotTime.setHours(hour, minute, 0, 0);
 
             const isBooked = bookedTimes.includes(raw.slice(0, 5));
-            const isFuture = !isToday || slotTime > now;
 
-            return !isBooked && isFuture;
+            // ✅ FIXED LOGIC
+            if (isToday) {
+              return !isBooked && slotTime.getTime() > now.getTime();
+            }
+
+            return !isBooked;
           })
-          .map(raw => raw.slice(0, 5));
+          .map((raw) => raw.slice(0, 5));
 
         setAvailableSlots(filtered);
         setSelectedSlot("");
@@ -119,7 +129,7 @@ const Dashboard: React.FC = () => {
           setAvailableSlots([]);
           setSelectedSlot("");
 
-          // refresh list instantly
+          // refresh instantly
           fetchPendingPatients();
         })
         .catch(() => {});
@@ -139,7 +149,7 @@ const Dashboard: React.FC = () => {
         {/* 🔹 Pending Patients */}
         <div className="dashboard-card">
           <h2>Pending Patients</h2>
-          <h2>({todayDisplay})</h2>
+          <h3>({todayDisplay})</h3>
 
           {patients.length === 0 ? (
             <p>No pending patients found</p>
@@ -177,10 +187,12 @@ const Dashboard: React.FC = () => {
 
             <input
               type="date"
+              min={todayDate}   // ✅ prevents past selection
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
 
+            {/* ✅ Slots */}
             {availableSlots.length > 0 && (
               <>
                 <h2>Select Time Slot</h2>
@@ -192,10 +204,19 @@ const Dashboard: React.FC = () => {
                   <option value="">-- Select Slot --</option>
 
                   {availableSlots.map((slot, idx) => (
-                    <option key={idx} value={slot}>{slot}</option>
+                    <option key={idx} value={slot}>
+                      {slot}
+                    </option>
                   ))}
                 </select>
               </>
+            )}
+
+            {/* ❗ No Slots Message */}
+            {date && availableSlots.length === 0 && (
+              <p style={{ color: "red" }}>
+                No slots available for selected date
+              </p>
             )}
 
             <button
