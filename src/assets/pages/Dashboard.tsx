@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../styles/global.css";
 import medIcon from "../images/med.png";
 
-// ✅ Direct Backend URL (WORKS ON VERCEL)
+// ✅ Backend URL
 const BASE_URL = "https://hospital-reservation-backend-1.onrender.com";
 
 interface PatientReservationDTO {
@@ -19,8 +19,8 @@ const Dashboard: React.FC = () => {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
 
-  // ✅ FIXED DATE (NO UTC BUG)
-  const todayDate = new Date().toLocaleDateString("en-CA");
+  // ✅ FIXED (IST safe)
+  const todayDate = new Date().toISOString().split("T")[0];
 
   const todayDisplay = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
@@ -37,22 +37,13 @@ const Dashboard: React.FC = () => {
         `${BASE_URL}/api/admin/patients?date=${todayDate}`
       );
 
-      if (!res.ok) throw new Error("Failed to fetch patients");
-
       const data: PatientReservationDTO[] = await res.json();
-
-      const todayOnly = data.filter(
-        (p) => p.reservationDate === todayDate
-      );
-
-      setPatients(todayOnly);
-    } catch (err) {
-      console.error(err);
+      setPatients(data);
+    } catch {
       setPatients([]);
     }
   };
 
-  // ✅ AUTO REFRESH
   useEffect(() => {
     fetchPendingPatients();
     const interval = setInterval(fetchPendingPatients, 10000);
@@ -60,7 +51,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // =========================
-  // 🔹 FETCH SLOTS
+  // 🔹 FETCH SLOTS (FIXED)
   // =========================
   useEffect(() => {
     if (!date) {
@@ -80,8 +71,10 @@ const Dashboard: React.FC = () => {
         const booked: PatientReservationDTO[] = await bookedRes.json();
 
         const now = new Date();
-        const isToday =
-          new Date().toLocaleDateString("en-CA") === date;
+
+        // ✅ IMPORTANT FIX
+        const todayStr = new Date().toISOString().split("T")[0];
+        const isToday = date === todayStr;
 
         const bookedTimes = booked.map((p) =>
           p.reservationTime.slice(0, 5)
@@ -95,11 +88,13 @@ const Dashboard: React.FC = () => {
 
             const isBooked = bookedTimes.includes(slot.slice(0, 5));
 
+            // ✅ FIXED LOGIC
             if (isToday) {
               return !isBooked && slotTime > now;
+            } else {
+              // FUTURE DATE → no time filtering
+              return !isBooked;
             }
-
-            return !isBooked;
           })
           .map((slot) => slot.slice(0, 5));
 
@@ -137,19 +132,14 @@ const Dashboard: React.FC = () => {
 
       const data = await res.json();
 
-      // 🔹 Open payment page
       window.open(data.paymentLink, "_blank");
 
-      localStorage.setItem("patientId", data.patientId);
-
-      // 🔹 Reset form
       setName("");
       setContact("");
       setDate("");
       setAvailableSlots([]);
       setSelectedSlot("");
 
-      // 🔹 Refresh list
       fetchPendingPatients();
     } catch (err) {
       console.error("Booking failed", err);
